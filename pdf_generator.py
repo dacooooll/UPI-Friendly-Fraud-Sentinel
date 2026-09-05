@@ -23,81 +23,81 @@ class NPCIDossierPDF(FPDF):
 def create_sample_dossier(input_file="evaluated_disputes.csv", output_pdf="sample_dispute_dossier.pdf"):
     print(f"📄 Reading evaluated disputes from {input_file}...")
     df = pd.read_csv(input_file)
-    
+
     fraud_cases = df[df['decision_action'] == 'DEFEND_NPCI_DISPUTE']
-    
+
     if len(fraud_cases) == 0:
         print("⚠️ No fraud cases found to generate PDF.")
         return
-        
+
     case = fraud_cases.iloc[0]
-    
+
     pdf = NPCIDossierPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
-    
+
     # Summary Box
     pdf.set_fill_color(240, 243, 250)
     pdf.rect(10, 32, 190, 28, 'F')
-    
+
     pdf.set_font('Helvetica', 'B', 11)
     pdf.set_text_color(0, 0, 0)
     pdf.set_xy(12, 35)
     pdf.cell(90, 6, f"Transaction ID: {case['transaction_id']}")
     pdf.cell(90, 6, f"UPI RRN: {case['upi_rrn']}", new_x="LMARGIN", new_y="NEXT")
-    
+
     pdf.set_x(12)
     pdf.cell(90, 6, f"Claimed Amount: INR {case['amount_inr']:,.2f}")
     pdf.cell(90, 6, f"Timestamp: {case['timestamp']}", new_x="LMARGIN", new_y="NEXT")
-    
+
     pdf.set_x(12)
     pdf.set_text_color(180, 0, 0)
     pdf.cell(90, 6, f"Fraud Risk Score: {case['risk_score']} / 1.00")
     pdf.set_text_color(0, 100, 0)
     pdf.cell(90, 6, f"Action: {case['decision_action']}", new_x="LMARGIN", new_y="NEXT")
-    
+
     pdf.ln(12)
-    
+
     # Evidence Section
     pdf.set_font('Helvetica', 'B', 12)
     pdf.set_text_color(20, 40, 80)
     pdf.cell(0, 8, '1. Merchant Telemetry & Proof of Delivery', new_x="LMARGIN", new_y="NEXT")
-    
+
     pdf.set_font('Helvetica', '', 10)
     pdf.set_text_color(30, 30, 30)
-    
+
     evidence_data = [
         ("Delivery Status Log", str(case['delivery_status'])),
         ("Digital Item / Voucher Redeemed", "YES (Verified via Service Webhook)" if case['item_consumed'] else "NO"),
         ("Delivery Delay", f"{case['delivery_delay_sec']} seconds"),
         ("Dispute Claim Reason", str(case['dispute_reason']))
     ]
-    
+
     for label, val in evidence_data:
         pdf.set_font('Helvetica', 'B', 10)
         # Using '-' instead of special character '•' to prevent Unicode encoding errors
         pdf.cell(70, 7, f"  - {label}:")
         pdf.set_font('Helvetica', '', 10)
         pdf.cell(110, 7, val, new_x="LMARGIN", new_y="NEXT")
-        
+
     pdf.ln(5)
-    
+
     # AI Finding
     pdf.set_font('Helvetica', 'B', 12)
     pdf.set_text_color(20, 40, 80)
     pdf.cell(0, 8, '2. AI XAI (Explainable) Fraud Finding', new_x="LMARGIN", new_y="NEXT")
-    
+
     pdf.set_font('Helvetica', '', 10)
     pdf.set_text_color(50, 50, 50)
     pdf.multi_cell(0, 6, f"Reason Code Analysis:\n{case['reason_code']}")
-    
+
     pdf.ln(5)
-    
+
     # Legal Statement
     pdf.set_font('Helvetica', 'B', 12)
     pdf.set_text_color(20, 40, 80)
     pdf.cell(0, 8, '3. Defense Statement for Acquiring Bank', new_x="LMARGIN", new_y="NEXT")
-    
+
     pdf.set_font('Helvetica', '', 9)
     pdf.set_text_color(80, 80, 80)
     statement = (
@@ -107,7 +107,7 @@ def create_sample_dossier(input_file="evaluated_disputes.csv", output_pdf="sampl
         "We request the acquiring bank to reject the chargeback request and release escrow funds."
     )
     pdf.multi_cell(0, 5, statement)
-    
+
     pdf.output(output_pdf)
     print(f"✅ Generated sample NPCI legal defense PDF -> {output_pdf}")
 
