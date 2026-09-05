@@ -15,21 +15,21 @@ st.set_page_config(
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-    
+
     html, body, [class*="css"] {
         font-family: 'Plus Jakarta Sans', sans-serif;
         background-color: #210635;
         color: #F5D5E0;
     }
-    
+
     .stApp {
         background-color: #210635;
     }
-    
+
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    
+
     .sentinel-header {
         background-color: #420D4B;
         border: 1px solid #6667AB;
@@ -38,7 +38,7 @@ st.markdown("""
         margin-bottom: 24px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
-    
+
     .sentinel-title {
         color: #F5D5E0;
         font-size: 26px;
@@ -46,7 +46,7 @@ st.markdown("""
         margin: 0;
         letter-spacing: -0.5px;
     }
-    
+
     .sentinel-subtitle {
         color: #6667AB;
         font-size: 14px;
@@ -61,7 +61,7 @@ st.markdown("""
         padding: 18px;
         text-align: left;
     }
-    
+
     .metric-label {
         color: #6667AB;
         font-size: 12px;
@@ -69,22 +69,22 @@ st.markdown("""
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .metric-value {
         color: #F5D5E0;
         font-size: 28px;
         font-weight: 700;
         margin-top: 6px;
     }
-    
+
     .metric-sub {
         font-size: 12px;
         margin-top: 4px;
     }
-    
+
     .text-emerald { color: #34D399; }
     .text-crimson { color: #F87171; }
-    
+
     .stButton > button {
         background-color: #7B337E !important;
         color: #F5D5E0 !important;
@@ -94,13 +94,13 @@ st.markdown("""
         padding: 8px 16px !important;
         transition: all 0.2s ease;
     }
-    
+
     .stButton > button:hover {
         background-color: #6667AB !important;
         border-color: #F5D5E0 !important;
         color: #FFFFFF !important;
     }
-    
+
     .stTextInput > div > div > input {
         background-color: #420D4B !important;
         color: #F5D5E0 !important;
@@ -198,16 +198,16 @@ left_col, right_col = st.columns([1.6, 1.0])
 
 with left_col:
     st.markdown("### 📋 Live Dispute Audit Stream")
-    
+
     search_query = st.text_input("🔍 Search RRN or Transaction ID", "", placeholder="e.g. TXN_UPI_ or 4209")
-    
+
     display_df = df.copy()
     if search_query:
         display_df = display_df[
             display_df['transaction_id'].str.contains(search_query, case=False, na=False) |
             display_df['upi_rrn'].astype(str).str.contains(search_query, case=False, na=False)
         ] if 'transaction_id' in display_df.columns and 'upi_rrn' in display_df.columns else display_df
-        
+
     avail_cols = [c for c in ['transaction_id', amount_col, 'risk_score', 'decision_action'] if c in display_df.columns]
     st.dataframe(
         display_df[avail_cols].head(15),
@@ -218,37 +218,37 @@ with left_col:
 
 with right_col:
     st.markdown("### 🔍 Case Telemetry Inspector")
-    
+
     txn_list = display_df['transaction_id'].tolist() if 'transaction_id' in display_df.columns else []
     if txn_list:
         selected_txn = st.selectbox("Select Transaction Record", txn_list)
         row = df[df['transaction_id'] == selected_txn].iloc[0]
-        
+
         st.markdown(f"""
-        **Transaction ID:** `{row.get('transaction_id', 'N/A')}`  
-        **UPI RRN:** `{row.get('upi_rrn', 'N/A')}`  
-        **Claim Amount:** `₹{row.get(amount_col, 0):,.2f}`  
-        **Fraud Risk Score:** `{row.get('risk_score', 'N/A')}`  
-        **Action Taken:** `{row.get('decision_action', 'N/A')}`  
-        
+        **Transaction ID:** `{row.get('transaction_id', 'N/A')}`
+        **UPI RRN:** `{row.get('upi_rrn', 'N/A')}`
+        **Claim Amount:** `₹{row.get(amount_col, 0):,.2f}`
+        **Fraud Risk Score:** `{row.get('risk_score', 'N/A')}`
+        **Action Taken:** `{row.get('decision_action', 'N/A')}`
+
         ---
         **Telemetry Verification:**
         * **Delivery Status:** `{row.get('delivery_status', 'N/A')}`
         * **Item Consumed:** `{'YES (Voucher Redeemed)' if row.get('item_consumed', False) else 'NO'}`
         * **Dispute Claim:** `{row.get('dispute_reason', 'N/A')}`
-        
+
         ---
-        **XAI Decision Explanation:**  
+        **XAI Decision Explanation:**
         _{row.get('reason_code', 'N/A')}_
         """)
-        
+
         st.markdown("<br>", unsafe_allow_html=True)
-        
+
         if st.button("📄 Generate & Inspect Legal PDF Dossier"):
             with st.spinner("Compiling NPCI Defense Dossier..."):
                 subprocess.run(["python", "pdf_generator.py"])
                 st.success("✅ Legal Dispute Dossier generated!")
-                
+
             if os.path.exists("sample_dispute_dossier.pdf"):
                 with open("sample_dispute_dossier.pdf", "rb") as pdf_file:
                     st.download_button(
